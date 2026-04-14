@@ -2,44 +2,54 @@
   <div class="home" id="home" :style="{width: downloadPanelPageSize.width + 'px',
                                       height: downloadPanelPageSize.height - 1 + 'px'}">
     <div class="header">
-      <el-input class="search" size="mini" suffix-icon="el-icon-search" v-model="searchContent"/>
+      <el-input class="search" size="small" v-model="searchContent">
+        <template #suffix>
+          <el-icon class="search-icon"><Search /></el-icon>
+        </template>
+      </el-input>
       <div class="header-operator">
-        <el-popover ref="openDownload" placement="bottom" width="342" trigger="click"
-                    v-model="showPopover" @after-enter="textareaFocus">
+        <el-popover ref="openDownload" placement="bottom" :width="342" trigger="click"
+                    v-model:visible="showPopover" @after-enter="textareaFocus">
           <el-input type="textarea" :clearable="true" resize="none"
                     :autosize="{ minRows: 1, maxRows: 4 }"
                     :placeholder="i18data.newDownloadPlaceholder"
-                    v-model="downloadUrl" @keydown.enter.native.prevent="enterToDownload(downloadUrl)">
+                    v-model="downloadUrl" @keydown.enter.prevent="enterToDownload(downloadUrl)">
           </el-input>
+          <template #reference>
+            <el-tooltip :disabled="closeTooltip" :content="i18data.newDownload"
+                        placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
+              <el-icon class="header-button icon-button"><Download /></el-icon>
+            </el-tooltip>
+          </template>
         </el-popover>
-        <div class="musk" v-if="showMusk" @click="() => {this.showMusk = false;this.showPopover = false}"/>
-        <el-tooltip :disabled="closeTooltip" :content="i18data.newDownload"
-                    placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
-          <i class="header-button icon-button el-icon-download" v-popover:openDownload/>
-        </el-tooltip>
+        <div class="musk" v-if="showMusk" @click="() => { this.showMusk = false; this.showPopover = false }"/>
         <el-tooltip :disabled="closeTooltip" :content="i18data.clearAll"
                     placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
           <el-dropdown trigger="click" @command="clearDropdownCommand">
-            <span class="el-dropdown-link"><i class="header-button icon-button el-icon-brush"/></span>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="clearAll">{{i18data.clearAll}}</el-dropdown-item>
-              <el-dropdown-item command="deleteAll">{{i18data.deleteAll}}</el-dropdown-item>
-              <el-dropdown-item command="clearFailed">{{i18data.clearFailed}}</el-dropdown-item>
-              <el-dropdown-item command="clearAbsent">{{i18data.clearAbsent}}</el-dropdown-item>
-            </el-dropdown-menu>
+            <span class="el-dropdown-link">
+              <el-icon class="header-button icon-button"><Brush /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="clearAll">{{i18data.clearAll}}</el-dropdown-item>
+                <el-dropdown-item command="deleteAll">{{i18data.deleteAll}}</el-dropdown-item>
+                <el-dropdown-item command="clearFailed">{{i18data.clearFailed}}</el-dropdown-item>
+                <el-dropdown-item command="clearAbsent">{{i18data.clearAbsent}}</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
           </el-dropdown>
         </el-tooltip>
         <el-tooltip :disabled="closeTooltip" :content="i18data.openDownloadFolder"
                     placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
-          <i class="header-button icon-button el-icon-folder" @click="openFolder"/>
+          <el-icon class="header-button icon-button" @click="openFolder"><FolderOpened /></el-icon>
         </el-tooltip>
         <el-tooltip :disabled="closeTooltip" :content="i18data.openHome"
                     placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
-          <i class="header-button icon-button el-icon-position" @click="openHome"/>
+          <el-icon class="header-button icon-button" @click="openHome"><Position /></el-icon>
         </el-tooltip>
         <el-tooltip :disabled="closeTooltip" :content="i18data.openSettings"
                     placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
-          <i class="header-button icon-button el-icon-setting" @click="openOptions"/>
+          <el-icon class="header-button icon-button" @click="openOptions"><Setting /></el-icon>
         </el-tooltip>
       </div>
     </div>
@@ -72,34 +82,60 @@
   export default {
     name: 'Popup',
     components: {File, Tip},
-    async beforeCreate() {
+    async created() {
       // 获取页面大小
       this.checkPageSize(await storage.get('download_panel_page_size'))
 
-      // 获取主题类型。共3种，light、dark、auto
-      let theme = await storage.get('theme')
-      // 获取下载面板主题类型。共3种，light、dark、custom
-      let downloadPanelTheme = await storage.get('download_panel_theme')
-
-      // 如果主题是自适应的话，就根据浏览器的颜色模式匹配主题
-      if (theme === 'auto') {
-        downloadPanelTheme = common.isInDarkMode() ? 'dark' : 'light'
-      }
       // 从本地json文件中获取主题数据
       this.themeData = await new Promise(resolve => {
         fetch('/theme/theme.json').then(r => resolve(r.json()))
       })
-      // 设置下载面板主题
-      this.setTheme(downloadPanelTheme)
 
-      // 监听浏览器的颜色模式
+      // 新增：优先使用 UI 主题设置
+      let uiTheme = await storage.get('ui_theme')
+      
+      if (uiTheme && this.themeData && this.themeData[uiTheme]) {
+        // 如果设置了 UI 主题，直接使用
+        this.setTheme(uiTheme)
+      } else {
+        // 否则使用原有的主题逻辑（向后兼容）
+        // 获取主题类型。共3种，light、dark、auto
+        let theme = await storage.get('theme')
+        // 获取下载面板主题类型。共3种，light、dark、custom
+        let downloadPanelTheme = await storage.get('download_panel_theme')
+
+        // 如果主题是自适应的话，就根据浏览器的颜色模式匹配主题
+        if (theme === 'auto') {
+          downloadPanelTheme = common.isInDarkMode() ? 'dark' : 'light'
+        }
+        
+        // 设置下载面板主题
+        this.setTheme(downloadPanelTheme)
+      }
+
+      // 监听来自 Options 页面的主题变更消息
+      chrome.runtime.onMessage.addListener(message => {
+        try {
+          let received = JSON.parse(message);
+          if (received.type === 'ui_theme_changed') {
+            this.setTheme(received.data)
+          }
+        } catch (e) {
+          // 忽略非 JSON 消息
+        }
+      })
+
+      // 监听浏览器的颜色模式（仅在未设置 UI 主题时生效）
       window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', (e) => {
-        storage.get('theme').then(theme => {
+        .addEventListener('change', async (e) => {
+        let uiTheme = await storage.get('ui_theme')
+        if (!uiTheme) {
+          // 只有在没有设置 UI 主题时才响应系统主题变化
+          let theme = await storage.get('theme')
           if (theme && theme === 'auto') {
             this.setTheme(e.matches ? 'dark' : 'light')
           }
-        })
+        }
       })
     },
     async mounted() {
@@ -204,7 +240,7 @@
         rightClickUrl: true,
         enableAnimation: false,
 
-        themeData: {}
+        themeData: null
       }
     },
     watch: {
@@ -402,8 +438,19 @@
           theme = 'light'
         }
 
+        // 确保 themeData 已加载
+        if (!this.themeData) {
+          console.warn('themeData not loaded yet, skipping setTheme');
+          return;
+        }
+
         let bodyStyle = document.querySelector('body').style
         let panelThemeData = this.themeData[theme]
+        if (!panelThemeData) {
+          console.warn(`Theme "${theme}" not found in themeData`);
+          return;
+        }
+        
         Object.keys(panelThemeData).forEach(key => {
           bodyStyle.setProperty(key, panelThemeData[key])
         })

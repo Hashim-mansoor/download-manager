@@ -125,15 +125,15 @@
         required: true
       },
       render: {
-        type: Function(),
+        type: Function,
         required: true
       },
       erase: {
-        type: Function(),
+        type: Function,
         required: true
       },
       copyToClipboard: {
-        type: Function(),
+        type: Function,
         required: true
       }
     },

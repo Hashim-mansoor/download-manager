@@ -30,13 +30,17 @@
       i18data: Object
     },
     data() {
+      const manifest = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest
+        ? chrome.runtime.getManifest()
+        : { name: 'download-manager', version: '' }
+
       return {
         githubUrl: 'https://github.com/xinghaix/download-manager',
         edgePluginShopUrl: 'https://microsoftedge.microsoft.com/addons/detail/phalbpghhjknlmomkmimbamfceiddlic',
         chromePluginShopUrl: 'https://chrome.google.com/webstore/detail/ofpglhlcdbjdhlacgbljnildhajfmlei',
 
-        extName: chrome.runtime.getManifest().name,
-        version: chrome.runtime.getManifest().version,
+        extName: manifest.name,
+        version: manifest.version,
       }
     },
     methods: {

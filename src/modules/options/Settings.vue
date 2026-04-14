@@ -173,8 +173,13 @@ export default {
 
     downloadContextMenus(val) {
       storage.set('download_context_menus', val)
-      // eslint-disable-next-line no-undef
-      chrome.runtime.sendMessage(JSON.stringify({type: 'downloadMenus', data: val}))
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage(JSON.stringify({type: 'downloadMenus', data: val}), () => {
+          if (chrome.runtime.lastError) {
+            // 静默处理连接错误
+          }
+        })
+      }
     },
 
     downloadStartedNotification(val) {
@@ -205,34 +210,67 @@ export default {
     }
   },
   async mounted() {
-    // 获取插件设置
-    // 下载设置
-    this.leftClickFile = await storage.get('left_click_file')
-    this.rightClickFile = await storage.get('right_click_file')
-    this.leftClickUrl = await storage.get('left_click_url')
-    this.rightClickUrl = await storage.get('right_click_url')
-    this.showTooltip = !await storage.get('close_tooltip')
-    this.enableAnimation = await storage.get('enable_animation')
-    // 上下文菜单设置
-    this.downloadContextMenus = await storage.get('download_context_menus')
-    // 通知设置
-    this.downloadStartedNotification = await storage.get('download_started_notification')
-    this.downloadCompletedNotification = await storage.get('download_completed_notification')
-    this.downloadWarningNotification = await storage.get('download_warning_notification')
-    this.downloadStartedTone = await storage.get('download_started_tone')
-    this.downloadCompletedTone = await storage.get('download_completed_tone')
-    this.downloadWarningTone = await storage.get('download_warning_tone')
-    this.downloadNotificationReservedTime = await storage.get('download_notification_reserved_time')
-    this.downloadNotificationRemainVisible = await storage.get('download_notification_remain_visible')
-    // 快捷键设置
-    this.openPopupShortcut = await this.getOpenPopupShortcut()
-    // 同步设置
-    this.isSync = await storage.get('sync')
+    try {
+      // 获取插件设置
+      // 下载设置
+      this.leftClickFile = await storage.get('left_click_file')
+      this.rightClickFile = await storage.get('right_click_file')
+      this.leftClickUrl = await storage.get('left_click_url')
+      this.rightClickUrl = await storage.get('right_click_url')
 
-    this.chromeVersionGreaterThan50 = common.chromeVersionGreaterThan(50)
+      const closeTooltip = await storage.get('close_tooltip')
+      this.showTooltip = typeof closeTooltip === 'boolean' ? !closeTooltip : false
 
-    // 开始渲染页面
-    this.show = true
+      const enableAnimation = await storage.get('enable_animation')
+      this.enableAnimation = typeof enableAnimation === 'boolean' ? enableAnimation : false
+
+      // 上下文菜单设置
+      const downloadContextMenus = await storage.get('download_context_menus')
+      this.downloadContextMenus = typeof downloadContextMenus === 'boolean' ? downloadContextMenus : true
+
+      // 通知设置
+      const downloadStartedNotification = await storage.get('download_started_notification')
+      this.downloadStartedNotification = typeof downloadStartedNotification === 'boolean' ? downloadStartedNotification : false
+
+      const downloadCompletedNotification = await storage.get('download_completed_notification')
+      this.downloadCompletedNotification = typeof downloadCompletedNotification === 'boolean' ? downloadCompletedNotification : false
+
+      const downloadWarningNotification = await storage.get('download_warning_notification')
+      this.downloadWarningNotification = typeof downloadWarningNotification === 'boolean' ? downloadWarningNotification : false
+
+      const downloadStartedTone = await storage.get('download_started_tone')
+      this.downloadStartedTone = typeof downloadStartedTone === 'boolean' ? downloadStartedTone : false
+
+      const downloadCompletedTone = await storage.get('download_completed_tone')
+      this.downloadCompletedTone = typeof downloadCompletedTone === 'boolean' ? downloadCompletedTone : false
+
+      const downloadWarningTone = await storage.get('download_warning_tone')
+      this.downloadWarningTone = typeof downloadWarningTone === 'boolean' ? downloadWarningTone : false
+
+      const downloadNotificationReservedTime = await storage.get('download_notification_reserved_time')
+      this.downloadNotificationReservedTime = Number.isFinite(Number(downloadNotificationReservedTime))
+        ? Number(downloadNotificationReservedTime)
+        : 10
+
+      const downloadNotificationRemainVisible = await storage.get('download_notification_remain_visible')
+      this.downloadNotificationRemainVisible = typeof downloadNotificationRemainVisible === 'boolean'
+        ? downloadNotificationRemainVisible
+        : false
+
+      // 快捷键设置
+      this.openPopupShortcut = await this.getOpenPopupShortcut()
+
+      // 同步设置
+      const sync = await storage.get('sync')
+      this.isSync = typeof sync === 'boolean' ? sync : true
+
+      this.chromeVersionGreaterThan50 = common.chromeVersionGreaterThan(50)
+    } catch (e) {
+      console.warn('Failed to initialize Settings page', e)
+    } finally {
+      // 开始渲染页面
+      this.show = true
+    }
   },
   data() {
     return {

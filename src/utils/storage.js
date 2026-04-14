@@ -1,5 +1,33 @@
 /* eslint-disable no-undef */
 
+const LOCAL_STORAGE_PREFIX = '__download_manager__'
+
+function hasChromeStorage() {
+  return typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync && chrome.storage.local
+}
+
+function getLocalKey(key) {
+  return `${LOCAL_STORAGE_PREFIX}:${key}`
+}
+
+function localGet(key) {
+  try {
+    const raw = localStorage.getItem(getLocalKey(key))
+    if (raw === null || typeof raw === 'undefined') return null
+    return JSON.parse(raw)
+  } catch (e) {
+    return null
+  }
+}
+
+function localSet(key, value) {
+  try {
+    localStorage.setItem(getLocalKey(key), JSON.stringify(value))
+  } catch (e) {
+    // ignore localStorage errors in non-extension dev environments
+  }
+}
+
 const storage = {
   /**
    * 设置配置
@@ -8,7 +36,15 @@ const storage = {
    * @param value
    */
   set(key, value) {
-    chrome.storage.sync.get('sync', isSync => chrome.storage[isSync ? 'sync' : 'local'].set({[key]: value}))
+    if (!hasChromeStorage()) {
+      localSet(key, value)
+      return
+    }
+
+    chrome.storage.sync.get('sync', result => {
+      const isSync = !!(result && result.sync)
+      chrome.storage[isSync ? 'sync' : 'local'].set({ [key]: value })
+    })
   },
 
   /**
@@ -17,9 +53,14 @@ const storage = {
    * @return {Promise}
    */
   get(keys) {
+    if (!hasChromeStorage()) {
+      return Promise.resolve(localGet(keys))
+    }
+
     return new Promise(resolve => {
-      chrome.storage.sync.get('sync', isSync => {
-        chrome.storage[isSync ? 'sync' : 'local'].get([keys], result => resolve(result[keys]))
+      chrome.storage.sync.get('sync', result => {
+        const isSync = !!(result && result.sync)
+        chrome.storage[isSync ? 'sync' : 'local'].get([keys], result2 => resolve(result2[keys]))
       })
     })
   },
@@ -70,7 +111,7 @@ const storage = {
 
     // 主题 - 下载面板主题，默认为白色
     await this.setDefaultIfNull('download_panel_theme', 'white')
-    await this.setDefaultIfNull('download_panel_page_size', {width: 400, height: 420})
+    await this.setDefaultIfNull('download_panel_page_size', { width: 400, height: 420 })
     // 设置 - 下载 - 插件设置默认不展示提示信息
     await this.setDefaultIfNull('close_tooltip', true)
     await this.setDefaultIfNull('left_click_file', true)
