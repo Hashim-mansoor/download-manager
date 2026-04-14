@@ -114,7 +114,9 @@
           <span class="setting-title">
             {{i18data.openPopupSetting}}
             <el-tooltip :content="i18data.notSyncSetting" placement="top"
-                        effect="dark" popper-class="tooltip" :enterable="false"><i class="el-icon-info"/></el-tooltip>
+                        effect="dark" popper-class="tooltip" :enterable="false">
+              <el-icon><InfoFilled /></el-icon>
+            </el-tooltip>
           </span>
           <span class="setting-description">
             {{i18data.openPopupDetailsSetting}}
@@ -139,11 +141,13 @@
 </template>
 
 <script>
+import { InfoFilled } from '@element-plus/icons-vue'
 import storage from '../../utils/storage'
 import common from '../../utils/common'
 
 export default {
-  name: "Settings",
+  name: 'Settings',
+  components: { InfoFilled },
   props: {
     i18data: Object
   },
@@ -361,7 +365,7 @@ export default {
     width: 600px;
     margin-bottom: 36px;
   }
-  .box-card >>> .el-card__body {
+  .box-card :deep(.el-card__body) {
     padding: 10px 16px;
   }
   .box-card .item {
@@ -417,16 +421,16 @@ export default {
   .reserved_time {
     width: 90px;
   }
-  .reserved_time >>> .el-input__inner {
+  .reserved_time :deep(.el-input__inner) {
     border-radius: 0;
   }
 
-  .box-card >>> .el-divider--horizontal {
+  .box-card :deep(.el-divider--horizontal) {
     margin: 10px 0!important;
     height: 0.5px!important;
   }
 
-  .item >>> .el-checkbox-button__inner {
+  .item :deep(.el-checkbox-button__inner) {
     padding: 5px 17px;
     font-size: 12px;
     border-radius: 0;

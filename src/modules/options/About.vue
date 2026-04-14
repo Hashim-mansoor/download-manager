@@ -4,12 +4,12 @@
     <el-card class="about-card box-card" shadow="hover">
       <div class="text">
         <div class="item">
-          <i class="iconfont el-icon-info"/>
+          <el-icon class="about-icon"><InfoFilled /></el-icon>
           <span class="prefix">{{extName}}<span class="version">{{version}}</span></span>
           <a class="suffix link" @click="openUrl(githubUrl)">Github</a>
         </div>
         <div class="item">
-          <i class="iconfont el-icon-star-on"/>
+          <el-icon class="about-icon star-icon"><StarFilled /></el-icon>
           <span class="prefix">{{i18data.starAbout1}}
             <a class="link" @click="openPluginShop">{{i18data.pluginShopAbout}}</a>
             {{i18data.starAbout2}}
@@ -22,10 +22,12 @@
 
 <script>
   /* eslint-disable no-undef */
+  import { InfoFilled, StarFilled } from '@element-plus/icons-vue'
   import common from '../../utils/common'
 
   export default {
-    name: "About",
+    name: 'About',
+    components: { InfoFilled, StarFilled },
     props: {
       i18data: Object
     },
@@ -79,10 +81,10 @@
     display: table;
     width: 100%;
   }
-  .box-card >>> .el-card__header {
+  .box-card :deep(.el-card__header) {
     padding: 8px 20px;
   }
-  .box-card >>> .el-card__body {
+  .box-card :deep(.el-card__body) {
     padding: 16px 20px 10px 20px;
   }
   .box-card .text {
@@ -99,14 +101,14 @@
     padding: 3px 0;
   }
   /* 图标 */
-  .about-card .item .iconfont {
+  .about-card .item .about-icon {
     display: table-cell;
     font-size: 16px;
     width: 22px;
     color: #409EFF;
     vertical-align: middle;
   }
-  .about-card .item .iconfont.el-icon-star-on {
+  .about-card .item .about-icon.star-icon {
     font-size: 17px!important;
   }
   /* 关于信息 卡片 */

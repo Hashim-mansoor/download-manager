@@ -136,11 +136,11 @@
                       </div>
                     </div>
                     <div class="header-operator popup-header-operator">
-                      <i class="header-button icon-button el-icon-download"></i>
-                      <i class="header-button icon-button el-icon-brush"></i>
-                      <i class="header-button icon-button el-icon-folder"></i>
-                      <i class="header-button icon-button el-icon-position"></i>
-                      <i class="header-button icon-button el-icon-setting"></i>
+                      <el-icon class="header-button icon-button"><Download /></el-icon>
+                      <el-icon class="header-button icon-button"><Brush /></el-icon>
+                      <el-icon class="header-button icon-button"><FolderOpened /></el-icon>
+                      <el-icon class="header-button icon-button"><Position /></el-icon>
+                      <el-icon class="header-button icon-button"><Setting /></el-icon>
                     </div>
                   </div>
 
@@ -171,10 +171,10 @@
                         </div>
                         <div class="content-operator-wrapper">
                           <div class="content-operator">
-                            <i class="icon-button el-icon-folder"></i>
-                            <i class="icon-button el-icon-video-pause"></i>
-                            <i class="icon-button el-icon-refresh-right"></i>
-                            <i class="icon-button el-icon-close"></i>
+                            <el-icon class="icon-button"><FolderOpened /></el-icon>
+                            <el-icon class="icon-button"><VideoPause /></el-icon>
+                            <el-icon class="icon-button"><RefreshRight /></el-icon>
+                            <el-icon class="icon-button"><Close /></el-icon>
                           </div>
                         </div>
                       </div>
@@ -272,11 +272,13 @@
 <script>
   /* eslint-disable no-undef */
 
+  import { Brush, Close, Download, FolderOpened, Position, RefreshRight, Setting, VideoPause } from '@element-plus/icons-vue'
   import storage from '../../utils/storage'
   import common from '../../utils/common'
 
   export default {
     name: 'Theme',
+    components: { Brush, Close, Download, FolderOpened, Position, RefreshRight, Setting, VideoPause },
     props: {
       i18data: Object
     },
@@ -565,7 +567,7 @@
     border-radius: 18px;
   }
 
-  .box-card >>> .el-card__body {
+  .box-card :deep(.el-card__body) {
     padding: 16px 18px;
   }
 
@@ -618,21 +620,21 @@
     width: 362px;
   }
 
-  .box-card .item .switch.icon >>> .el-color-picker:first-child {
+  .box-card .item .switch.icon :deep(.el-color-picker:first-child) {
     margin-right: 16px;
   }
 
-  .box-card .item .switch.icon >>> .el-color-picker.color .el-color-picker__trigger {
+  .box-card .item .switch.icon :deep(.el-color-picker.color .el-color-picker__trigger) {
     border-color: #5ba2ff;
   }
 
-  .box-card >>> .el-radio-button__inner {
+  .box-card :deep(.el-radio-button__inner) {
     padding: 6px 18px;
     font-size: 12px;
     border-radius: 0 !important;
   }
 
-  .box-card >>> .el-divider--horizontal {
+  .box-card :deep(.el-divider--horizontal) {
     margin: 14px 0 !important;
     height: 0.5px !important;
   }
@@ -641,16 +643,16 @@
     align-items: center;
   }
 
-  .page-size >>> .el-input-number {
+  .page-size :deep(.el-input-number) {
     width: 78px;
     margin-left: 0;
   }
 
-  .page-size >>> .el-input-number + .el-input-number {
+  .page-size :deep(.el-input-number + .el-input-number) {
     margin-left: 8px;
   }
 
-  .page-size >>> .el-input__inner {
+  .page-size :deep(.el-input__inner) {
     border-radius: 10px;
   }
 
