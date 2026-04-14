@@ -82,7 +82,7 @@
         </div>
         <div class="switch width">
           <el-input-number v-model="downloadNotificationReservedTime" :controls="false"
-                           class="reserved_time" :max="43200" size="mini"></el-input-number>
+                           class="reserved_time" :max="43200" size="small"></el-input-number>
         </div>
       </div>
       <el-divider/>
@@ -324,7 +324,7 @@ export default {
         chrome.commands.getAll(commands => {
           if (commands) {
             commands.forEach(command => {
-              if (command && command.name === '_execute_browser_action') {
+              if (command && command.name === '_execute_action') {
                 if (command.shortcut) {
                   resolve(command.shortcut)
                 } else {
@@ -341,9 +341,8 @@ export default {
     // 在新标签页中打开下载文件链接
     openUrl(url) {
       // eslint-disable-next-line no-undef
-      chrome.tabs.create({url: url})
-    },
-
+      chrome.tabs.create({url})
+    }
   }
 }
 </script>

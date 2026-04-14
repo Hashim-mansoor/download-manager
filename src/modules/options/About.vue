@@ -53,8 +53,8 @@
         this.openUrl(url)
       },
       // 在新标签页中打开下载文件链接
-      openUrl (url) {
-        chrome.tabs.create({ url: url })
+      openUrl(url) {
+        chrome.tabs.create({ url })
       },
     }
   }
@@ -139,22 +139,4 @@
     text-decoration: underline;
   }
 
-    /* 版本历史信息 卡片 */
-  .version-card .card-header span {
-    display: table-cell;
-    font-weight: bold;
-    vertical-align: middle;
-    font-family: Consolas, Microsoft YaHei, sans-serif;
-  }
-  .version-card .card-header .version {
-    font-size: 14px;
-    text-align: left;
-  }
-  .version-card .card-header .date {
-    font-size: 13px;
-    text-align: right;
-  }
-  .version-card .card-header .date .el-icon-date {
-    margin-right: 4px;
-  }
 </style>

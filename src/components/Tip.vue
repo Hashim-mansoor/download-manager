@@ -9,6 +9,7 @@
 <script>
   export default {
     name: 'Tip',
+    emits: ['update:showTip'],
     props: {
       text: {
         type: String,

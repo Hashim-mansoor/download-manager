@@ -8,7 +8,7 @@
           <span class="setting-description">{{i18data.themeAdaptationDescription}}</span>
         </div>
         <div class="switch width">
-          <el-radio-group v-model="theme" size="mini">
+          <el-radio-group v-model="theme" size="small">
             <el-radio-button label="auto">{{i18data.themeAdaptationOption1}}</el-radio-button>
             <el-radio-button label="light">{{i18data.themeAdaptationOption2}}</el-radio-button>
             <el-radio-button label="dark">{{i18data.themeAdaptationOption3}}</el-radio-button>
@@ -26,13 +26,13 @@
         <div class="switch width icon">
           <el-tooltip :content="i18data.themeAdaptationOption2 + i18data.themeTitle"
                       placement="top" effect="dark" popper-class="tooltip" :enterable="false">
-            <el-color-picker :value="iconColor['icon_color']['light']" size="small"
+            <el-color-picker :model-value="iconColor['icon_color']['light']" size="small"
                              :class="theme === 'light' || theme === 'auto' ? 'color' : ''"
                              @change="setIconColor($event, 'icon_color', 'light')"/>
           </el-tooltip>
           <el-tooltip :content="i18data.themeAdaptationOption3 + i18data.themeTitle"
                       placement="top" effect="dark" popper-class="tooltip" :enterable="false">
-            <el-color-picker :value="iconColor['icon_color']['dark']" size="small"
+            <el-color-picker :model-value="iconColor['icon_color']['dark']" size="small"
                              :class="theme === 'dark' || theme === 'auto' ? 'color' : ''"
                              @change="setIconColor($event, 'icon_color', 'dark')"/>
           </el-tooltip>
@@ -46,13 +46,13 @@
         <div class="switch width icon">
           <el-tooltip :content="i18data.themeAdaptationOption2 + i18data.themeTitle"
                       placement="top" effect="dark" popper-class="tooltip" :enterable="false">
-            <el-color-picker :value="iconColor['icon_downloading_color']['light']" size="small"
+            <el-color-picker :model-value="iconColor['icon_downloading_color']['light']" size="small"
                              :class="theme === 'light' || theme === 'auto' ? 'color' : ''"
                              @change="setIconColor($event, 'icon_downloading_color', 'light')"/>
           </el-tooltip>
           <el-tooltip :content="i18data.themeAdaptationOption3 + i18data.themeTitle"
                       placement="top" effect="dark" popper-class="tooltip" :enterable="false">
-            <el-color-picker :value="iconColor['icon_downloading_color']['dark']" size="small"
+            <el-color-picker :model-value="iconColor['icon_downloading_color']['dark']" size="small"
                              :class="theme === 'dark' || theme === 'auto' ? 'color' : ''"
                              @change="setIconColor($event, 'icon_downloading_color', 'dark')"/>
           </el-tooltip>
@@ -69,9 +69,9 @@
         </div>
         <div class="switch width page-size">
           <el-input-number v-model="downloadPanelPageSize.width" :controls="false"
-                           :min="350" :max="800" size="mini"></el-input-number>
+                           :min="350" :max="800" size="small"></el-input-number>
           <el-input-number v-model="downloadPanelPageSize.height" :controls="false"
-                           :min="300" :max="600" size="mini"></el-input-number>
+                           :min="300" :max="600" size="small"></el-input-number>
         </div>
       </div>
 
@@ -110,7 +110,7 @@
             <span class="scale-value">固定适配显示</span>
             <span class="scale-hint">不再跟随外层区域放大，默认按舒适比例展示。</span>
           </div>
-          <el-button v-if="uiTheme" size="mini" @click="clearUITheme">回到跟随模式</el-button>
+          <el-button v-if="uiTheme" size="small" @click="clearUITheme">回到跟随模式</el-button>
         </div>
       </section>
 

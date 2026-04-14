@@ -1,27 +1,35 @@
 
 class RemoveNewFunctionPlugin {
   apply(compiler) {
-    compiler.hooks.emit.tapAsync('RemoveNewFunctionPlugin', (compilation, callback) => {
-      Object.keys(compilation.assets).forEach(filename => {
-        if (filename.endsWith('.js')) {
-          const asset = compilation.assets[filename];
-          let source = asset.source().toString();
+    const { Compilation, sources } = compiler.webpack
 
-          // 替换 new Function("return this") 为直接返回 self
-          source = source.replace(
-            /new Function\("return this"\)\(\)/g,
-            '(function() { return typeof globalThis === "object" ? globalThis : typeof self === "object" ? self : typeof window === "object" ? window : this; })()'
-          );
+    compiler.hooks.thisCompilation.tap('RemoveNewFunctionPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'RemoveNewFunctionPlugin',
+          stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE
+        },
+        (assets) => {
+          Object.keys(assets).forEach((filename) => {
+            if (!filename.endsWith('.js')) {
+              return
+            }
 
-          // 更新资源
-          compilation.assets[filename] = {
-            source: () => source,
-            size: () => source.length
-          };
+            const asset = compilation.getAsset(filename)
+            if (!asset) {
+              return
+            }
+
+            const source = asset.source.source().toString().replace(
+              /new Function\("return this"\)\(\)/g,
+              '(function() { return typeof globalThis === "object" ? globalThis : typeof self === "object" ? self : typeof window === "object" ? window : this; })()'
+            )
+
+            compilation.updateAsset(filename, new sources.RawSource(source))
+          })
         }
-      });
-      callback();
-    });
+      )
+    })
   }
 }
 

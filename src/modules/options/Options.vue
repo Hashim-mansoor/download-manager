@@ -56,27 +56,25 @@
   import Theme from './Theme'
 
   export default {
-  name: 'Options',
-  components: { About, DArrowLeft, InfoFilled, Settings, TakeawayBox, Theme, Tools },
-  mounted() {
-    document.title = this.i18data.settingsTitle + ' - ' + this.i18data.extensionName
-  },
-  data() {
-    return {
-      publicPath: process.env.BASE_URL,
-      isCollapse: false,
-      selectedIndex: '#settings',
-
-      i18data: common.i18data,
-    }
-  },
-  methods: {
-    // 当侧边栏菜单被选中时的回调事件
-    handleSideSelect(index) {
-      this.selectedIndex = index;
+    name: 'Options',
+    components: { About, DArrowLeft, InfoFilled, Settings, TakeawayBox, Theme, Tools },
+    mounted() {
+      document.title = this.i18data.settingsTitle + ' - ' + this.i18data.extensionName
+    },
+    data() {
+      return {
+        publicPath: process.env.BASE_URL,
+        isCollapse: false,
+        selectedIndex: '#settings',
+        i18data: common.i18data
+      }
+    },
+    methods: {
+      handleSideSelect(index) {
+        this.selectedIndex = index
+      }
     }
   }
-}
 </script>
 
 <!--suppress CssUnusedSymbol -->
