@@ -66,7 +66,7 @@
         </transition>
       </RecycleScroller>
       <el-backtop target=".content #vue-recycle-scroller" visibilityHeight="70"/>
-      <tip :text="i18data.copied" :position="tipPosition"/>
+      <tip :text="i18data.copied" :position="tipPosition" v-model:showTip="showCopiedTip"/>
     </div>
   </div>
 </template>
@@ -230,6 +230,7 @@
 
         // 复制文件名和文件链接时的弹框设置
         tipPosition: {x: 0, y: 0},
+        showCopiedTip: false,
 
         // 插件设置
         // 鼠标移动到按钮上时是否展示提示信息
@@ -416,16 +417,19 @@
        * @param text {String} 需要复制到剪切板的内容，字符串类型
        * @param event {MouseEvent}
        */
-      copyToClipboard(text, event) {
-        if (text) {
-          this.$copyText(text).then(() => {
-            // 复制成功时，更新并显示已复制的弹框
-            if (event) {
-              this.tipPosition = {x: event.pageX, y: event.pageY}
-            }
-          }, e => {
-            console.error('failed to copy', e)
-          })
+      async copyToClipboard(text, event) {
+        if (!text) {
+          return
+        }
+
+        try {
+          await navigator.clipboard.writeText(text)
+          if (event) {
+            this.tipPosition = {x: event.pageX, y: event.pageY}
+          }
+          this.showCopiedTip = true
+        } catch (e) {
+          console.error('failed to copy', e)
         }
       },
 
@@ -568,21 +572,25 @@
   .header .search {
     width: 200px;
   }
-  .header .search >>> .el-input__inner {
+  .header .search :deep(.el-input__wrapper) {
     border-radius: 16px;
+    min-height: 24px;
+    background-color: var(--header-search-background-color);
+    box-shadow: 0 0 0 1px var(--header-search-border-color) inset !important;
+    transition: box-shadow 0ms;
+  }
+  .header .search :deep(.el-input__wrapper:hover),
+  .header .search :deep(.el-input__wrapper.is-focus) {
+    box-shadow: 0 0 0 1px var(--header-search-hover-border-color) inset !important;
+  }
+  .header .search :deep(.el-input__inner) {
     height: 24px;
     line-height: 24px;
-    background-color: var(--header-search-background-color);
     color: var(--header-search-color);
-    border-color: var(--header-search-border-color)!important;
-    transition: border-color 0ms;
   }
-  .header .search >>> .el-input__inner:hover,
-  .header .search >>> .el-input__inner:focus {
-    border-color: var(--header-search-hover-border-color)!important;
-  }
-  .header .search >>> .el-input__icon.el-icon-search {
+  .header .search .search-icon {
     line-height: 24px;
+    color: var(--header-search-color);
   }
 
   .header .header-operator {
@@ -647,29 +655,29 @@
   }
 
   /* 滚动条样式 */
-  .content >>> .vue-recycle-scroller::-webkit-scrollbar { /*滚动条整体样式*/
+  .content :deep(.vue-recycle-scroller::-webkit-scrollbar) { /*滚动条整体样式*/
     width: 7px; /*高宽分别对应横竖滚动条的尺寸*/
     height: 7px;
     scrollbar-arrow-color: red;
   }
-  .content >>> .vue-recycle-scroller::-webkit-scrollbar-thumb:hover {
+  .content :deep(.vue-recycle-scroller::-webkit-scrollbar-thumb:hover) {
     cursor: pointer;
   }
-  .content >>> .vue-recycle-scroller::-webkit-scrollbar-thumb { /*滚动条里面小方块*/
+  .content :deep(.vue-recycle-scroller::-webkit-scrollbar-thumb) { /*滚动条里面小方块*/
     border-radius: 10px;
-    -webkit-box-shadow: inset 0 0 4px rgba(123, 123, 123, 0.2);;
+    -webkit-box-shadow: inset 0 0 4px rgba(123, 123, 123, 0.2);
     background: var(--scrollbar-thumb-background-color);
   }
-  .content >>> .vue-recycle-scroller::-webkit-scrollbar-track { /*滚动条里面轨道*/
+  .content :deep(.vue-recycle-scroller::-webkit-scrollbar-track) { /*滚动条里面轨道*/
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 4px transparent;
   }
-  .content >>> .vue-recycle-scroller {
+  .content :deep(.vue-recycle-scroller) {
     height: 100%;
   }
 
   /* 返回顶部按钮 */
-  .content >>> .el-backtop {
+  .content :deep(.el-backtop) {
     right: 16px !important;
     bottom: 20px !important;
     width: 34px;
