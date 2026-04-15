@@ -478,25 +478,26 @@
 <!--suppress CssUnusedSymbol -->
 <style rel="stylesheet/scss">
   /* 覆盖vue子组件popper样式 */
-  body .tooltip {
+  body .tooltip,
+  body .tooltip.el-popper {
+    --el-popper-bg-color-dark: var(--tooltip-background-color);
+    --el-fill-color-blank: var(--tooltip-background-color);
+    --el-text-color-primary: var(--tooltip-background-color);
     background: var(--tooltip-background-color)!important;
     color: var(--tooltip-color)!important;
+    border-color: var(--tooltip-background-color)!important;
     padding: 4px!important;
     font-size: 12px!important;
     transition: none;
     -webkit-transform-origin-x: 0;
     -webkit-transform: scale(.9);
   }
-  body .tooltip,
-  body .tooltip.el-popper {
-    border-color: var(--tooltip-background-color)!important;
-  }
   body .tooltip .el-popper__arrow,
   body .tooltip.el-popper .el-popper__arrow {
     color: var(--tooltip-background-color)!important;
   }
-  body .tooltip .el-popper__arrow::before,
-  body .tooltip.el-popper .el-popper__arrow::before {
+  body .tooltip > .el-popper__arrow::before,
+  body .tooltip.el-popper > .el-popper__arrow::before {
     background: var(--tooltip-background-color)!important;
     border-color: var(--tooltip-background-color)!important;
   }
