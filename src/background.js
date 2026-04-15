@@ -10,8 +10,8 @@ let state = {
   downloadingNumber: 0,
   progress: -1,
   notificationList: [],
-  isInDarkMode: false,
-  progressTimer: null
+  progressTimer: null,
+  systemTheme: null
 }
 
 const contextDownloadMenus = ['link', 'image', 'audio', 'video']
@@ -35,13 +35,10 @@ async function initialize() {
     await storage.defaultSettings()
 
     // 获取主题并设置图标
-    let theme = await storage.get('theme')
-    if (theme && theme === 'auto') {
-      theme = 'light' // Service Worker 中默认使用 light
-    }
+    const themeKey = await getActiveIconThemeKey()
     const iconColor = await storage.get('icon_color')
-    if (iconColor && iconColor[theme]) {
-      icon.setBrowserActionIcon(iconColor[theme], false)
+    if (iconColor && iconColor[themeKey]) {
+      icon.setBrowserActionIcon(iconColor[themeKey], false)
     }
 
     // 禁用下载底部提示
@@ -54,14 +51,13 @@ async function initialize() {
     handleDangerousDownloading(false)
     updateDownloadProgress()
 
+    await ensureOffscreenDocument()
+
     // 创建上下文菜单
     const downloadContextMenus = await storage.get('download_context_menus')
     if (downloadContextMenus) {
-      createDownloadContextMenus()
+      await createDownloadContextMenus()
     }
-
-    // 设置定时检查主题（使用 alarms 替代 setInterval）
-    chrome.alarms.create('theme-check', { periodInMinutes: 1/60 }) // 每秒检查
 
   } catch (error) {
     console.error('Initialize error:', error)
@@ -112,13 +108,31 @@ chrome.contextMenus.onClicked.addListener((info) => {
 
 // 消息监听
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  try {
-    const received = JSON.parse(message)
-    
-    if (received.type) {
+  (async () => {
+    try {
+      let received = message
+      if (typeof message === 'string') {
+        received = JSON.parse(message)
+      }
+
+      if (!received || typeof received !== 'object' || !received.type) {
+        sendResponse({ success: false, error: 'Invalid message payload' })
+        return
+      }
+
       switch (received.type) {
         case 'downloadMenus':
-          received.data ? createDownloadContextMenus() : removeDownloadContextMenus()
+          if (received.data) {
+            await createDownloadContextMenus()
+          } else {
+            removeDownloadContextMenus()
+          }
+          break
+        case 'ui_theme_changed':
+          await handleUiThemeChanged(received.data)
+          break
+        case 'system_theme_changed':
+          await handleSystemThemeChanged(received.data)
           break
         case 'icon_color':
           if (state.anyInProgress) {
@@ -131,30 +145,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           icon.message.runningColor = received.data
           break
       }
+
+      sendResponse({ success: true })
+    } catch (error) {
+      console.error('Message handler error:', error)
+      sendResponse({ success: false, error: error.message })
     }
-    
-    sendResponse({ success: true })
-  } catch (error) {
-    console.error('Message handler error:', error)
-    sendResponse({ success: false, error: error.message })
-  }
-  
+  })()
+
   return true
 })
 
-// Alarms 监听（替代 setInterval）
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'theme-check') {
-    checkThemeChange()
-  }
-})
-
-// 检查主题变化
-async function checkThemeChange() {
-  // Service Worker 中无法直接检测系统主题
-  // 这个功能在 V3 中需要通过其他方式实现
-  // 暂时跳过
-}
 
 // 更新下载进度
 async function updateDownloadProgress() {
@@ -215,24 +216,22 @@ async function updateDownloadProgress() {
 
       // 更新图标进度
       if (anyInProgress) {
-        const theme = await storage.get('theme')
+        const themeKey = await getActiveIconThemeKey()
         const iconColor = await storage.get('icon_color')
         const iconDownloadingColor = await storage.get('icon_downloading_color')
-        
+
         if (iconColor && iconDownloadingColor) {
-          const themeKey = (theme === 'auto') ? 'light' : theme
           icon.setRunningBrowserActionIcon(
-            iconColor[themeKey], 
-            iconDownloadingColor[themeKey], 
-            anyInProgress, 
+            iconColor[themeKey],
+            iconDownloadingColor[themeKey],
+            anyInProgress,
             state.progress
           )
         }
       } else {
-        const theme = await storage.get('theme')
+        const themeKey = await getActiveIconThemeKey()
         const iconColor = await storage.get('icon_color')
         if (iconColor) {
-          const themeKey = (theme === 'auto') ? 'light' : theme
           icon.restoreDefaultIcon(iconColor[themeKey])
         }
       }
@@ -375,22 +374,123 @@ async function handleDownloadWarningNotification(item) {
   }
 }
 
-// 播放音频（使用 Offscreen Document）
-async function playAudio(audioFile) {
-  try {
-    // 检查是否已有 offscreen document
+async function getActiveIconThemeKey() {
+  const uiTheme = await storage.get('ui_theme')
+  if (uiTheme) {
+    return uiTheme.endsWith('-dark') ? 'dark' : 'light'
+  }
+
+  const theme = await storage.get('theme')
+  if (theme === 'dark' || theme === 'light') {
+    return theme
+  }
+
+  if (state.systemTheme === 'dark' || state.systemTheme === 'light') {
+    return state.systemTheme
+  }
+
+  const storedSystemTheme = await storage.get('system_theme')
+  if (storedSystemTheme === 'dark' || storedSystemTheme === 'light') {
+    return storedSystemTheme
+  }
+
+  return 'light'
+}
+
+async function handleUiThemeChanged(themeName) {
+  if (themeName) {
+    const themeKey = themeName.endsWith('-dark') ? 'dark' : 'light'
+    const iconColor = await storage.get('icon_color')
+    const iconDownloadingColor = await storage.get('icon_downloading_color')
+
+    if (state.anyInProgress && iconColor && iconDownloadingColor) {
+      icon.setRunningBrowserActionIcon(
+        iconColor[themeKey],
+        iconDownloadingColor[themeKey],
+        true,
+        state.progress
+      )
+    } else if (iconColor) {
+      icon.restoreDefaultIcon(iconColor[themeKey])
+    }
+    return
+  }
+
+  const themeKey = await getActiveIconThemeKey()
+  const iconColor = await storage.get('icon_color')
+  const iconDownloadingColor = await storage.get('icon_downloading_color')
+
+  if (state.anyInProgress && iconColor && iconDownloadingColor) {
+    icon.setRunningBrowserActionIcon(
+      iconColor[themeKey],
+      iconDownloadingColor[themeKey],
+      true,
+      state.progress
+    )
+  } else if (iconColor) {
+    icon.restoreDefaultIcon(iconColor[themeKey])
+  }
+}
+
+async function handleSystemThemeChanged(themeName) {
+  if (themeName !== 'dark' && themeName !== 'light') {
+    return
+  }
+
+  state.systemTheme = themeName
+  storage.set('system_theme', themeName)
+
+  const uiTheme = await storage.get('ui_theme')
+  const theme = await storage.get('theme')
+  if (uiTheme || theme !== 'auto') {
+    return
+  }
+
+  const iconColor = await storage.get('icon_color')
+  const iconDownloadingColor = await storage.get('icon_downloading_color')
+
+  if (state.anyInProgress && iconColor && iconDownloadingColor) {
+    icon.setRunningBrowserActionIcon(
+      iconColor[themeName],
+      iconDownloadingColor[themeName],
+      true,
+      state.progress
+    )
+  } else if (iconColor) {
+    icon.restoreDefaultIcon(iconColor[themeName])
+  }
+}
+
+async function hasOffscreenDocument() {
+  if (chrome.runtime.getContexts) {
     const existingContexts = await chrome.runtime.getContexts({
       contextTypes: ['OFFSCREEN_DOCUMENT']
     })
-    
-    if (existingContexts.length === 0) {
-      await chrome.offscreen.createDocument({
-        url: 'offscreen.html',
-        reasons: ['AUDIO_PLAYBACK'],
-        justification: 'Play download notification sound'
-      })
-    }
-    
+    return existingContexts.length > 0
+  }
+
+  const clientsList = await clients.matchAll()
+  const offscreenUrl = chrome.runtime.getURL('offscreen.html')
+  return clientsList.some((client) => client.url === offscreenUrl)
+}
+
+async function ensureOffscreenDocument() {
+  if (await hasOffscreenDocument()) {
+    return
+  }
+
+  await chrome.offscreen.createDocument({
+    url: 'offscreen.html',
+    reasons: ['AUDIO_PLAYBACK', 'MATCH_MEDIA'],
+    justification: 'Play notification audio and observe system theme changes'
+  })
+}
+
+// 播放音频（使用 Offscreen Document）
+async function playAudio(audioFile) {
+  try {
+    await ensureOffscreenDocument()
+
     await chrome.runtime.sendMessage({
       type: 'play-audio',
       file: audioFile
@@ -477,28 +577,33 @@ function getProgress(item) {
 }
 
 // 创建上下文菜单
-function createDownloadContextMenus() {
-  contextDownloadMenus.forEach(menu => {
-    chrome.contextMenus.create({
-      id: 'download-' + menu,
-      title: common.i18data.prefixMenus + common.i18data[menu],
-      contexts: [menu]
-    }, () => {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError)
-      }
-    })
+async function createDownloadContextMenus() {
+  await new Promise((resolve) => {
+    chrome.contextMenus.removeAll(() => resolve())
   })
+
+  await Promise.all(contextDownloadMenus.map((menu) => {
+    return new Promise((resolve) => {
+      chrome.contextMenus.create({
+        id: 'download-' + menu,
+        title: common.i18data.prefixMenus + common.i18data[menu],
+        contexts: [menu]
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError)
+        }
+        resolve()
+      })
+    })
+  }))
 }
 
 // 删除上下文菜单
 function removeDownloadContextMenus() {
-  contextDownloadMenus.forEach(menu => {
-    chrome.contextMenus.remove('download-' + menu, () => {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError)
-      }
-    })
+  chrome.contextMenus.removeAll(() => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError)
+    }
   })
 }
 

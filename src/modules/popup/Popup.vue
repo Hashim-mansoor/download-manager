@@ -87,8 +87,11 @@
       this.checkPageSize(await storage.get('download_panel_page_size'))
 
       // 从本地json文件中获取主题数据
+      const themeUrl = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+        ? chrome.runtime.getURL('/theme/theme.json')
+        : '/theme/theme.json'
       this.themeData = await new Promise(resolve => {
-        fetch('/theme/theme.json').then(r => resolve(r.json()))
+        fetch(themeUrl).then(r => resolve(r.json()))
       })
 
       // 新增：优先使用 UI 主题设置
@@ -153,7 +156,16 @@
 
       // 接收来自background发来的数据
       chrome.runtime.onMessage.addListener(message => {
-        let received = JSON.parse(message);
+        if (typeof message !== 'string') {
+          return
+        }
+
+        let received
+        try {
+          received = JSON.parse(message)
+        } catch (e) {
+          return
+        }
 
         if (received.type === 'download') {
           // data中存放自定义的从background传过来的下载信息

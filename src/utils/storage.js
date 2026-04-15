@@ -109,8 +109,8 @@ const storage = {
       })
     }
 
-    // 主题 - 下载面板主题，默认为白色
-    await this.setDefaultIfNull('download_panel_theme', 'white')
+    // 主题 - 下载面板主题，默认为亮色
+    await this.setDefaultIfNull('download_panel_theme', 'light')
     await this.setDefaultIfNull('download_panel_page_size', { width: 400, height: 420 })
     // 设置 - 下载 - 插件设置默认不展示提示信息
     await this.setDefaultIfNull('close_tooltip', true)
@@ -119,8 +119,6 @@ const storage = {
     await this.setDefaultIfNull('left_click_url', true)
     await this.setDefaultIfNull('right_click_url', true)
     await this.setDefaultIfNull('enable_animation', false)
-    // 插件默认关闭下载过程中的通知
-    await this.setDefaultIfNull('close_download_notification', true)
     await this.setDefaultIfNull('download_started_notification', false)
     await this.setDefaultIfNull('download_completed_notification', false)
     await this.setDefaultIfNull('download_warning_notification', false)
@@ -129,8 +127,6 @@ const storage = {
     await this.setDefaultIfNull('download_notification_reserved_time', 10)
     await this.setDefaultIfNull('download_notification_remain_visible', false)
     await this.setDefaultIfNull('download_warning_tone', false)
-    // 插件默认关闭下载完成提示音
-    await this.setDefaultIfNull('download_completion_tone', false)
     // 插件默认创建下载文件上下文菜单
     await this.setDefaultIfNull('download_context_menus', true)
   }
