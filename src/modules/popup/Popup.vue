@@ -25,9 +25,9 @@
         <div class="musk" v-if="showMusk" @click="() => { this.showMusk = false; this.showPopover = false }"/>
         <el-tooltip :disabled="closeTooltip" :content="i18data.clearAll"
                     placement="bottom" effect="dark" popper-class="tooltip" :enterable="false">
-          <el-dropdown trigger="click" @command="clearDropdownCommand">
-            <span class="el-dropdown-link">
-              <el-icon class="header-button icon-button"><Brush /></el-icon>
+          <el-dropdown class="header-dropdown" trigger="click" @command="clearDropdownCommand">
+            <span class="header-button header-dropdown-trigger">
+              <el-icon class="icon-button"><Brush /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>

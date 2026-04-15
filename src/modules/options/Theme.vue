@@ -9,9 +9,9 @@
         </div>
         <div class="switch width">
           <el-radio-group v-model="theme" size="small">
-            <el-radio-button label="auto">{{i18data.themeAdaptationOption1}}</el-radio-button>
-            <el-radio-button label="light">{{i18data.themeAdaptationOption2}}</el-radio-button>
-            <el-radio-button label="dark">{{i18data.themeAdaptationOption3}}</el-radio-button>
+            <el-radio-button value="auto">{{i18data.themeAdaptationOption1}}</el-radio-button>
+            <el-radio-button value="light">{{i18data.themeAdaptationOption2}}</el-radio-button>
+            <el-radio-button value="dark">{{i18data.themeAdaptationOption3}}</el-radio-button>
           </el-radio-group>
         </div>
       </div>
