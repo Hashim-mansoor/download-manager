@@ -168,46 +168,31 @@
         }
 
         if (received.type === 'download') {
+          const incomingIds = new Set(received.data.map(item => item.id))
+          this.downloadItems = this.downloadItems.filter(item => incomingIds.has(item.id))
+
           // data中存放自定义的从background传过来的下载信息
           // 为了解决文件图标闪烁问题，此处不能直接调用请求chrome下载文件的方法
           for (let i = 0, len1 = received.data.length; i < len1; i++) {
             let item = received.data[i]
-            // 在刚创建下载时，文件名称会为空
-            if (item.filename) {
-              // 当搜索框存在内容时，此时也要搜索下载中的文件
-              item.show = this.searchContent === '' || item.basename.toLowerCase().indexOf(this.searchContent) > -1
+            let tmpItem = this.getItem(item.id)
 
-              // 查看是否存在已经保存的下载的文件
-              let tmpItem = this.getItem(item.id)
-              if (tmpItem) {
-                tmpItem.filename = item.filename
-                tmpItem.basename = item.basename
-                common.beforeHandler(tmpItem)
-                tmpItem.error = item.error ? item.error : null
-                tmpItem.estimatedEndTime = item.estimatedEndTime ? item.estimatedEndTime : null
-                // 记录上一次接收的文件大小，以便于统一计算2种下载情况下的下载速度
-                tmpItem.previousBytesReceived = tmpItem.bytesReceived
-                tmpItem.bytesReceived = item.bytesReceived
-                tmpItem.totalBytes = item.totalBytes
-                tmpItem.state = item.state
-                tmpItem.danger = item.danger
-                tmpItem.show = item.show
-              } else {
-                common.beforeHandler(item)
-                item.previousBytesReceived = 0
+            if (tmpItem) {
+              this.mergeDownloadItem(tmpItem, item)
+            } else if (item.filename) {
+              this.prepareDownloadItem(item)
 
-                let noInsert = true
-                for (let j = 0, len2 = this.downloadItems.length; j < len2; j++) {
-                  if (item.startTime >= this.downloadItems[j].startTime) {
-                    // 按照下载开始时间降序排列
-                    this.downloadItems.splice(j, 0, item)
-                    noInsert = false
-                    break
-                  }
+              let noInsert = true
+              for (let j = 0, len2 = this.downloadItems.length; j < len2; j++) {
+                if (item.startTime >= this.downloadItems[j].startTime) {
+                  // 按照下载开始时间降序排列
+                  this.downloadItems.splice(j, 0, item)
+                  noInsert = false
+                  break
                 }
-                if (noInsert) {
-                  this.downloadItems.push(item)
-                }
+              }
+              if (noInsert) {
+                this.downloadItems.push(item)
               }
             }
           }
@@ -216,10 +201,7 @@
 
       // 如果其他插件或者谷歌浏览器下载界面清除下载文件时，同步搜索数据
       chrome.downloads.onErased.addListener((id) => {
-        let item = this.getItem(id)
-        if (item) {
-          this.erase(item)
-        }
+        this.removeItemById(id)
       })
     },
     data() {
@@ -315,6 +297,28 @@
         return null
       },
 
+      removeItemById(id) {
+        this.downloadItems = this.downloadItems.filter(item => item.id !== id)
+      },
+
+      prepareDownloadItem(item) {
+        common.beforeHandler(item)
+        item.previousBytesReceived = item.previousBytesReceived || 0
+        item.error = item.error || null
+        item.estimatedEndTime = item.estimatedEndTime || null
+        item.endTime = item.endTime || null
+        item.exists = typeof item.exists === 'boolean' ? item.exists : true
+        item.paused = Boolean(item.paused)
+        item.show = this.searchContent === '' || item.basename.toLowerCase().indexOf(this.searchContent) > -1
+      },
+
+      mergeDownloadItem(target, source) {
+        const previousBytesReceived = target.bytesReceived || 0
+        Object.assign(target, source)
+        this.prepareDownloadItem(target)
+        target.previousBytesReceived = previousBytesReceived
+      },
+
       /**
        * 获取所有下载文件列表
        */
@@ -322,8 +326,10 @@
         chrome.downloads.search({orderBy: ['-startTime']}, (items) => {
           this.downloadItems = []
           items.forEach(item => {
-            common.beforeHandler(item)
-            item.show = true
+            if (!item.filename) {
+              return
+            }
+            this.prepareDownloadItem(item)
             this.downloadItems.push(item)
           })
         })
@@ -386,12 +392,7 @@
        */
       erase(item) {
         chrome.downloads.erase({id: item.id}, () => {
-          for (let i = 0; i < this.downloadItems.length; i++) {
-            if (this.downloadItems[i].id === item.id) {
-              this.downloadItems.splice(i, 1)
-              break
-            }
-          }
+          this.removeItemById(item.id)
         })
       },
 

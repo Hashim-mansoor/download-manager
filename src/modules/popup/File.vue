@@ -202,7 +202,10 @@
 
       // 从磁盘中删除文件
       remove(item) {
-        chrome.downloads.removeFile(item.id, () => this.erase(item))
+        chrome.downloads.removeFile(item.id, () => {
+          item.exists = false
+          this.erase(item)
+        })
       },
 
       // 暂停或恢复下载
