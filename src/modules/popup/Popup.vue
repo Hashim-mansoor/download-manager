@@ -487,7 +487,16 @@
     -webkit-transform-origin-x: 0;
     -webkit-transform: scale(.9);
   }
-  body .tooltip .el-popper__arrow::before {
+  body .tooltip,
+  body .tooltip.el-popper {
+    border-color: var(--tooltip-background-color)!important;
+  }
+  body .tooltip .el-popper__arrow,
+  body .tooltip.el-popper .el-popper__arrow {
+    color: var(--tooltip-background-color)!important;
+  }
+  body .tooltip .el-popper__arrow::before,
+  body .tooltip.el-popper .el-popper__arrow::before {
     background: var(--tooltip-background-color)!important;
     border-color: var(--tooltip-background-color)!important;
   }
@@ -604,11 +613,23 @@
 
   .header .header-operator {
     float: right;
-    display: table;
+    display: flex;
+    align-items: center;
   }
   .header .header-button {
-    display: table-cell;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 3px 5px;
+    vertical-align: middle;
+  }
+  .header .header-dropdown,
+  .header .header-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+  }
+  .header .header-dropdown-trigger {
+    outline: none;
   }
 
   /* 显示手动下载文件弹框时的遮蔽层 */
